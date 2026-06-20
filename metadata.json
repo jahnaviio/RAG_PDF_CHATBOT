@@ -1,0 +1,6 @@
+{
+  "name": "RAG PDF Knowledge Assistant",
+  "description": "Upload any PDF and ask natural language questions about its contents using semantic search and retrieval-augmented generation (RAG).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
