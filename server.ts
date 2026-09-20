@@ -13,7 +13,7 @@ const { PDFParse } = require("pdf-parse");
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Initialize Google Gen AI
 const apiKey = process.env.GEMINI_API_KEY;
