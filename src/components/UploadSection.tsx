@@ -73,8 +73,8 @@ export default function UploadSection({ onUploadSuccess, onReset, activeDoc }: U
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) { // 20 MB max limit for stability
-      setError("File is too large. Maximum size supported is 20MB.");
+    if (file.size > 3 * 1024 * 1024) { // 20 MB max limit for stability
+      setError(""File is too large for the live demo. Maximum size is 3MB."");
       return;
     }
 
