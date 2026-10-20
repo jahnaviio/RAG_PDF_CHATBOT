@@ -23,7 +23,7 @@ Upload a PDF and ask natural-language questions about it. The app extracts the t
 | Language            | TypeScript                               |
 | Frontend            | React 19, Vite, Tailwind CSS             |
 | Backend             | Node.js, Express                         |
-| LLM & Embeddings    | Google Gemini API (`gemini-3.6-flash`, `gemini-embedding-2`) |
+| LLM & Embeddings    | Google Gemini API (default `gemini-2.5-flash` + `gemini-embedding-001`, configurable via `GEMINI_MODEL` / `GEMINI_EMBEDDING_MODEL`) |
 | PDF Processing      | pdf-parse                                |
 | Vector Store        | In-memory, cosine similarity (per server instance) |
 | Deployment          | Vercel (serverless function under `/api`) |
