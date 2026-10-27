@@ -1,7 +1,7 @@
 export interface DocumentMetadata {
   id: string;
   name: string;
-  size: number; // in bytes
+  size: number; // bytes
   uploadTime: string;
   pageCount: number;
   chunkCount: number;
@@ -12,27 +12,32 @@ export interface Chunk {
   id: string;
   text: string;
   pageNumber: number;
-  score?: number; // Similarity score for retrieval
-}
-
-export interface QueryResponse {
-  answer: string;
-  retrievedChunks: Chunk[];
-  question: string;
-  timestamp: string;
-}
-
-export interface SearchResult {
-  chunk: Chunk;
-  score: number;
+  score?: number; // cosine similarity, set on retrieved chunks
 }
 
 export interface IndexedChunk extends Chunk {
   embedding: number[];
 }
 
-/** Everything the server needs to answer questions about a document. */
+/** A document's full vector index. It lives in the browser, never on the server. */
 export interface DocumentIndex {
   metadata: DocumentMetadata;
   chunks: IndexedChunk[];
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  sources?: Chunk[];
+  error?: boolean;
+}
+
+export type IndexStage = "reading" | "chunking" | "embedding";
+
+export interface IndexProgress {
+  fileName: string;
+  stage: IndexStage;
+  percent: number;
+  message: string;
 }

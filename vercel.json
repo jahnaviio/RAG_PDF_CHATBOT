@@ -3,8 +3,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/[[...slug]].ts": {
-      "maxDuration": 60,
-      "includeFiles": "node_modules/pdf-parse/**"
+      "maxDuration": 60
     }
   }
 }

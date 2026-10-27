@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: #fafaf9;
+  color: #1c1917;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Rendered Markdown inside assistant answers */
+.answer-md {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #292524;
+  overflow-wrap: anywhere;
+}
+.answer-md > * + * { margin-top: 0.75rem; }
+.answer-md h1, .answer-md h2, .answer-md h3 { font-weight: 600; color: #1c1917; line-height: 1.35; }
+.answer-md h1 { font-size: 1.15rem; }
+.answer-md h2 { font-size: 1.05rem; }
+.answer-md h3 { font-size: 0.98rem; }
+.answer-md ul { list-style: disc; padding-left: 1.25rem; }
+.answer-md ol { list-style: decimal; padding-left: 1.25rem; }
+.answer-md li + li { margin-top: 0.3rem; }
+.answer-md strong { font-weight: 600; color: #1c1917; }
+.answer-md code { background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 0.375rem; padding: 0.05rem 0.35rem; font-size: 0.85em; }
+.answer-md pre { background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 0.75rem; padding: 0.75rem 1rem; overflow-x: auto; }
+.answer-md pre code { background: none; border: 0; padding: 0; }
+.answer-md blockquote { border-left: 3px solid #d6d3d1; padding-left: 0.9rem; color: #57534e; }
+.answer-md table { width: 100%; border-collapse: collapse; font-size: 0.875rem; display: block; overflow-x: auto; }
+.answer-md th, .answer-md td { border: 1px solid #e7e5e4; padding: 0.4rem 0.6rem; text-align: left; }
+.answer-md th { background: #fafaf9; font-weight: 600; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.25s ease-out both; }
+
+@keyframes dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+.typing-dot { animation: dot 1.1s infinite; }

@@ -1,33 +1,39 @@
 # 📚 RAG PDF Knowledge Assistant
 
-**Retrieval-Augmented Generation (RAG) | Semantic Search | Gemini-Powered Document Intelligence**
+**Chat with any PDF.** Upload a document, ask questions in plain English, and get answers grounded in the file, with page citations.
 
-Upload a PDF and ask natural-language questions about it. The app extracts the text, splits it into overlapping chunks, embeds each chunk, retrieves the most relevant chunks for a question by cosine similarity, and asks Gemini to answer using only that retrieved context — citing the source chunk and page it used.
+## How it works
 
----
+1. **Read** – the PDF is parsed *in your browser* with `pdf.js` (no file upload, so no server size limits).
+2. **Chunk** – each page is split into overlapping ~1000-character chunks.
+3. **Embed** – chunks are sent in small batches to `/api/embed`, which calls Gemini embeddings (768-dim vectors).
+4. **Search** – your question is embedded the same way and matched against the chunks by cosine similarity, in the browser.
+5. **Answer** – the top 5 chunks go to `/api/answer`, where Gemini writes an answer using only that context, citing `[Source Block #n]`.
 
-## 🚀 Features
+The server is **stateless** (it only holds the Gemini key), so it works on Vercel serverless without a database.
 
-- Upload a PDF; text is extracted and split into overlapping chunks automatically.
-- Each chunk is converted to a vector embedding and kept in an in-memory store for the session.
-- Questions are embedded the same way and matched against stored chunks by cosine similarity.
-- The top 5 matching chunks are passed to Gemini as grounding context, with a system prompt that tells it to say so explicitly if the answer isn't in the document, rather than guessing.
-- Answers cite which source chunk and estimated page they came from.
+## Tech stack
 
----
+React 19 · Vite · Tailwind CSS 4 · TypeScript · Express (Vercel serverless function under `/api`) · Google Gemini (`gemini-2.5-flash`, `gemini-embedding-001`) · pdf.js · react-markdown
 
-## 🛠️ Tech Stack
+## Run locally
 
-| Category          | Technology                              |
-| ------------------ | ---------------------------------------- |
-| Language            | TypeScript                               |
-| Frontend            | React 19, Vite, Tailwind CSS             |
-| Backend             | Node.js, Express                         |
-| LLM & Embeddings    | Google Gemini API (default `gemini-2.5-flash` + `gemini-embedding-001`, configurable via `GEMINI_MODEL` / `GEMINI_EMBEDDING_MODEL`) |
-| PDF Processing      | pdf-parse                                |
-| Vector Store        | In-memory, cosine similarity (per server instance) |
-| Deployment          | Vercel (serverless function under `/api`) |
+```bash
+npm install
+cp .env.example .env      # then put your key in GEMINI_API_KEY
+npm run dev               # http://localhost:3000
+```
 
----
+## Deploy on Vercel
 
-## 📂 Project Structure
+1. Import the repo in Vercel.
+2. Add the environment variable **`GEMINI_API_KEY`** (Project Settings → Environment Variables).
+3. Deploy. Optional overrides: `GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_EMBEDDING_DIMENSIONS`.
+
+Check `https://<your-app>.vercel.app/api/health` – it should show `"geminiKeyConfigured": true`.
+
+## Limits
+
+- Text-based PDFs only (scanned/image PDFs have no text to read), up to 25MB / 600 chunks.
+- Documents live in the browser tab; refreshing clears them.
+- Free Gemini tier has rate limits; the app waits and retries automatically.
