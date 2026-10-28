@@ -1,23 +1,30 @@
 import { useRef } from "react";
-import { BookOpen, FileText, Plus, Trash2, X } from "lucide-react";
-import type { DocumentMetadata } from "../types";
+import { BookOpen, FileText, Layers, LogOut, MessageCircle, Plus, Trash2, X } from "lucide-react";
+import type { DocumentMetadata, User } from "../types";
 
 interface SidebarProps {
   documents: DocumentMetadata[];
   activeId: string | null;
   busy: boolean;
   open: boolean;
+  user: User;
   onClose: () => void;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onFile: (file: File) => void;
+  onLogout: () => void;
 }
 
 const formatSize = (bytes: number) =>
   bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
-export default function Sidebar({ documents, activeId, busy, open, onClose, onSelect, onDelete, onFile }: SidebarProps) {
+export default function Sidebar({ documents, activeId, busy, open, user, onClose, onSelect, onDelete, onFile, onLogout }: SidebarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const chatItems = [
+    { id: "general", label: "General chat", hint: "Ask anything", Icon: MessageCircle, show: true },
+    { id: "all", label: "All documents", hint: `Search across ${documents.length} PDFs`, Icon: Layers, show: documents.length >= 2 },
+  ].filter((c) => c.show);
 
   return (
     <>
@@ -65,47 +72,85 @@ export default function Sidebar({ documents, activeId, busy, open, onClose, onSe
           </button>
         </div>
 
-        <p className="mt-6 px-5 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Documents</p>
-        <nav className="mt-2 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-          {documents.length === 0 && <p className="px-2 py-3 text-sm text-stone-400">Nothing here yet. Add a PDF to get started.</p>}
-          {documents.map((doc) => {
-            const active = doc.id === activeId;
-            return (
-              <div
-                key={doc.id}
-                onClick={() => {
-                  onSelect(doc.id);
-                  onClose();
-                }}
-                className={`group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
-                  active ? "bg-stone-100" : "hover:bg-stone-50"
-                }`}
-              >
-                <FileText className={`h-4 w-4 shrink-0 ${active ? "text-indigo-600" : "text-stone-400"}`} />
-                <div className="min-w-0 flex-1">
-                  <p className={`truncate text-sm ${active ? "font-semibold text-stone-900" : "text-stone-700"}`}>{doc.name}</p>
-                  <p className="text-xs text-stone-400">
-                    {doc.pageCount} {doc.pageCount === 1 ? "page" : "pages"} · {formatSize(doc.size)}
-                  </p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(doc.id);
+        <nav className="mt-4 flex-1 overflow-y-auto px-3 pb-4">
+          <p className="px-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Chats</p>
+          <div className="mt-2 space-y-1">
+            {chatItems.map(({ id, label, hint, Icon }) => {
+              const active = id === activeId;
+              return (
+                <div
+                  key={id}
+                  onClick={() => {
+                    onSelect(id);
+                    onClose();
                   }}
-                  className="rounded-md p-1.5 text-stone-400 opacity-100 transition hover:bg-red-50 hover:text-red-600 lg:opacity-0 lg:group-hover:opacity-100"
-                  aria-label={`Remove ${doc.name}`}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${active ? "bg-stone-100" : "hover:bg-stone-50"}`}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            );
-          })}
+                  <Icon className={`h-4 w-4 shrink-0 ${active ? "text-indigo-600" : "text-stone-400"}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`truncate text-sm ${active ? "font-semibold text-stone-900" : "text-stone-700"}`}>{label}</p>
+                    <p className="text-xs text-stone-400">{hint}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="mt-6 px-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">Documents</p>
+          <div className="mt-2 space-y-1">
+            {documents.length === 0 && <p className="px-2 py-3 text-sm text-stone-400">Nothing here yet. Add a PDF to get started.</p>}
+            {documents.map((doc) => {
+              const active = doc.id === activeId;
+              return (
+                <div
+                  key={doc.id}
+                  onClick={() => {
+                    onSelect(doc.id);
+                    onClose();
+                  }}
+                  className={`group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
+                    active ? "bg-stone-100" : "hover:bg-stone-50"
+                  }`}
+                >
+                  <FileText className={`h-4 w-4 shrink-0 ${active ? "text-indigo-600" : "text-stone-400"}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`truncate text-sm ${active ? "font-semibold text-stone-900" : "text-stone-700"}`}>{doc.name}</p>
+                    <p className="text-xs text-stone-400">
+                      {doc.pageCount} {doc.pageCount === 1 ? "page" : "pages"} · {formatSize(doc.size)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(doc.id);
+                    }}
+                    className="rounded-md p-1.5 text-stone-400 opacity-100 transition hover:bg-red-50 hover:text-red-600 lg:opacity-0 lg:group-hover:opacity-100"
+                    aria-label={`Remove ${doc.name}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </nav>
 
-        <p className="border-t border-stone-100 px-5 py-4 text-xs leading-relaxed text-stone-400">
-          Documents stay in this browser tab. Refreshing the page clears them.
-        </p>
+        <div className="flex items-center gap-3 border-t border-stone-100 px-4 py-3">
+          {user.picture ? (
+            <img src={user.picture} alt="" referrerPolicy="no-referrer" className="h-8 w-8 shrink-0 rounded-full" />
+          ) : (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+              {(user.name || user.email).slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-sm font-medium text-stone-800">{user.name}</p>
+            <p className="truncate text-xs text-stone-400">{user.email}</p>
+          </div>
+          <button onClick={onLogout} className="rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900" aria-label="Log out" title="Log out">
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </aside>
     </>
   );

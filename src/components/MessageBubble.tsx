@@ -3,8 +3,51 @@ import ReactMarkdown from "react-markdown";
 import { AlertCircle, Check, ChevronDown, Copy, Sparkles } from "lucide-react";
 import type { ChatMessage } from "../types";
 
-/** Turns "[Source Block #2]" into a markdown link we can render as a clickable chip. */
-const withCitations = (md: string) => md.replace(/\[Source Block #(\d+)[^\]]*\]/gi, (_m, n) => `[${n}](#source-${n})`);
+/** Turns "[Source Block #2]" (or "[Source Block #1, #3]") into markdown links we render as clickable chips. */
+const withCitations = (md: string, streaming?: boolean) => {
+  // while the answer is still streaming, hide a half-written marker such as "[Source Blo"
+  const text = streaming ? md.replace(/\[S[^\]]{0,30}$/, "") : md;
+  return text.replace(/\[Source Blocks?\s*([^\]]*)\]/gi, (_m, inner: string) => {
+    const nums = [...inner.matchAll(/\d+/g)].map((x) => x[0]);
+    return nums.map((n) => `[${n}](#source-${n})`).join("");
+  });
+};
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Highlights the search words inside a retrieved passage so the user sees why it matched. */
+function Highlighted({ text, terms }: { text: string; terms?: string[] }) {
+  const usable = (terms ?? []).filter((t) => t.length >= 3);
+  if (!usable.length) return <>{text}</>;
+  let re: RegExp;
+  try {
+    re = new RegExp(`(?<![\\p{L}\\p{N}])(?:${usable.map(escapeRegExp).join("|")})[\\p{L}\\p{N}]*`, "giu");
+  } catch {
+    return <>{text}</>;
+  }
+  const parts: (string | { mark: string })[] = [];
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    const i = m.index ?? 0;
+    if (i > last) parts.push(text.slice(last, i));
+    parts.push({ mark: m[0] });
+    last = i + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return (
+    <>
+      {parts.map((p, i) =>
+        typeof p === "string" ? (
+          <span key={i}>{p}</span>
+        ) : (
+          <mark key={i} className="rounded bg-amber-100 px-0.5 text-stone-800">
+            {p.mark}
+          </mark>
+        )
+      )}
+    </>
+  );
+}
 
 export function TypingBubble() {
   return (
@@ -57,6 +100,8 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
   }
 
   const sources = message.sources ?? [];
+  // only show the passages the answer actually used (older messages without that info show all)
+  const visible = sources.map((s, i) => ({ s, i })).filter(({ i }) => !message.cited || message.cited.includes(i + 1));
   const openCitation = (n: number) => {
     setShowSources(true);
     setOpenIdx(n - 1);
@@ -95,17 +140,18 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               },
             }}
           >
-            {withCitations(message.content)}
+            {withCitations(message.content, message.streaming)}
           </ReactMarkdown>
         </div>
 
+        {!message.streaming && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {sources.length > 0 && (
+          {visible.length > 0 && (
             <button
               onClick={() => setShowSources((v) => !v)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-900"
             >
-              Sources ({sources.length})
+              Sources ({visible.length})
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showSources ? "rotate-180" : ""}`} />
             </button>
           )}
@@ -117,10 +163,11 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
+        )}
 
-        {showSources && (
+        {showSources && !message.streaming && (
           <div className="rise mt-3 space-y-2">
-            {sources.map((s, i) => {
+            {visible.map(({ s, i }) => {
               const open = openIdx === i;
               return (
                 <div key={s.id} className={`rounded-xl border bg-white transition-colors ${open ? "border-indigo-300" : "border-stone-200"}`}>
@@ -128,14 +175,21 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-[11px] font-semibold text-indigo-700">
                       {i + 1}
                     </span>
-                    <span className="text-sm font-medium text-stone-800">Page {s.pageNumber}</span>
+                    <span className="min-w-0 truncate text-sm font-medium text-stone-800">
+                      Page {s.pageNumber}
+                      {s.docName ? <span className="font-normal text-stone-400"> · {s.docName}</span> : null}
+                    </span>
                     {typeof s.score === "number" && (
                       <span className="ml-auto rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-stone-500">
                         {Math.round(s.score * 100)}% match
                       </span>
                     )}
                   </button>
-                  {open && <p className="border-t border-stone-100 px-3.5 py-3 text-sm leading-relaxed text-stone-600">{s.text}</p>}
+                  {open && (
+                    <p className="border-t border-stone-100 px-3.5 py-3 text-sm leading-relaxed text-stone-600">
+                      <Highlighted text={s.text} terms={message.terms} />
+                    </p>
+                  )}
                 </div>
               );
             })}

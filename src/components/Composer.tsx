@@ -55,7 +55,7 @@ export default function Composer({ disabled, busy, placeholder, onSend }: Compos
             <ArrowUp className="h-4.5 w-4.5" />
           </button>
         </div>
-        <p className="mt-2 text-center text-xs text-stone-400">Answers come only from your PDF. Enter to send, Shift+Enter for a new line.</p>
+        <p className="mt-2 text-center text-xs text-stone-400">Answers use your PDF first, then AI knowledge when needed. Enter to send, Shift+Enter for a new line.</p>
       </div>
     </div>
   );
